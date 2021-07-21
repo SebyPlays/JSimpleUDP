@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -29,6 +30,7 @@ public class Client implements ICommunicator{
 
     @Override
     public void start() {
+        running = true;
         Thread thread = new Thread("udpclient"){
             @SneakyThrows
             @Override
@@ -42,7 +44,6 @@ public class Client implements ICommunicator{
             }
         };
         thread.start();
-
     }
 
     @Override
@@ -51,12 +52,14 @@ public class Client implements ICommunicator{
         datagramSocket.close();
     }
 
-    @SneakyThrows
     public void sendPacket(DatagramPacket datagramPacket){
-        datagramSocket.send(datagramPacket);
+        try {
+            datagramSocket.send(datagramPacket);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    @SneakyThrows
     public void callReceiver(DatagramPacket datagramPacket){
         packetReceiver.onPacket(this, datagramPacket, datagramPacket.getAddress(),
                 new String(datagramPacket.getData(), 0, datagramPacket.getLength()), this.getType());
@@ -67,6 +70,7 @@ public class Client implements ICommunicator{
         return this.type;
     }
 
+    @Override
     public void sendMessage(InetAddress inetAddress, String message){
         byte[] messageBytes = message.getBytes();
         DatagramPacket datagramPacket = new DatagramPacket(messageBytes, messageBytes.length, inetAddress, port);
