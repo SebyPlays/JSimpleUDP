@@ -15,6 +15,12 @@ public interface ICommunicator {
 
     Type getType();
 
-    void sendMessage(InetAddress inetAddress, String message);
+    void sendMessage(InetAddress inetAddress, int port, String message);
+    void sendMessage(String message);
+
+    DatagramPacket getLastReceivedPacket();
+    DatagramPacket getLastSentPacket();
+    long getLastReceivedTime();
+    long getLastSentTime();
 
 }
