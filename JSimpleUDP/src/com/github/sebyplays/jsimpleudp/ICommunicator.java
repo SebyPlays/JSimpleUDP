@@ -20,6 +20,7 @@ public interface ICommunicator {
 
     DatagramPacket getLastReceivedPacket();
     DatagramPacket getLastSentPacket();
+    DatagramPacket sendMessageCallBack(String message);
     long getLastReceivedTime();
     long getLastSentTime();
 

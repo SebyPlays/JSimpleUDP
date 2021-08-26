@@ -9,6 +9,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class Server implements ICommunicator{
 
@@ -20,9 +22,12 @@ public class Server implements ICommunicator{
     @Getter @Setter private PacketReceiver packetReceiver;
     @Getter private DatagramPacket lastReceivedPacket;
     @Getter private DatagramPacket lastSentPacket;
-    private long lastReceivedTime = 0;
-    private long lastSentTime = 0;
+    private long lastReceivedTime = System.currentTimeMillis();
+    private long lastSentTime = System.currentTimeMillis();
 
+    @Getter private DatagramPacket tempPacket;
+
+    @Getter private ArrayList<PacketReceiver> receivers = new ArrayList<>();
 
     public Server(int port, PacketReceiver packetReceiver) throws SocketException {
         this.datagramSocket = new DatagramSocket(port);
@@ -40,8 +45,9 @@ public class Server implements ICommunicator{
                     DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
                     datagramSocket.receive(datagramPacket);
                     lastReceivedPacket = datagramPacket;
-                    lastReceivedTime = System.currentTimeMillis();
                     callReceiver(datagramPacket);
+                    lastReceivedTime = System.currentTimeMillis();
+                    tempPacket = datagramPacket;
                 }
             }
         };
@@ -85,6 +91,24 @@ public class Server implements ICommunicator{
 
     @Override
     public void sendMessage(String message) {
+        sendMessage(getLastReceivedPacket().getAddress(), getLastReceivedPacket().getPort(), message);
+    }
+
+    @SneakyThrows
+    public DatagramPacket sendMessageCallBack(String message){
+        sendMessage(message);
+        int timeOut = 0;
+        while (tempPacket == null){
+            if(timeOut <= 20){
+                timeOut++;
+                TimeUnit.SECONDS.sleep(1);
+            } else {
+                return null;
+            }
+        }
+        DatagramPacket response = tempPacket;
+        tempPacket = null;
+        return response;
     }
 
     @Override
